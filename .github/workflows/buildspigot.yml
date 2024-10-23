@@ -26,7 +26,7 @@ jobs:
           java-version: "21"
 
       # BuildTools によるビルド スピゴット
-      - name: "ビルド実行
+      - name: "ビルド実行"
         # !! 「最新」を希望のバージョンに変更します。 !!
         # また、1.17.X より前のバージョンをビルドしようとしている場合は、Java バージョンを変更する必要があります。
         run: "java -jar BuildTools.jar --rev latest"
