@@ -1,37 +1,53 @@
-# 
-# This version SpigotBuildAction script is outdated.
-# Use "BuildSpigot with Latest BuildTools" in "~/.github/workflows/buildspigot-buildtools.yml".
-# No further support on this script.
-# 
-name: BuildSpigot
+name: "最新の BuildTools を使用して Spigot を構築する"
 
 on:
+  schedule:
+    - cron: "0 0 6,12,18,24,30 * *"
+
   workflow_dispatch:
+  push:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
 
     steps:
-      # Get BuildTools from repo
-      - name: Getting BuildTools
-        uses: actions/checkout@v2
+      # https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar から BuildTools を取得します。
+      - name: "ビルドツールの入手"
+        run: "curl https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar -o ./BuildTools.jar"
 
-      # Build Spigot by BuildTools
-      - name: Building Spigot
-        # !! Change 'latest' to the version what you wanted. !!
-        run: java -jar BuildTools.jar --rev latest
-      
-      # Uploading the build jar files.
-      - name: Uploading Build
-        uses: actions/upload-artifact@v2
+      - name: "Java 開発キットのセットアップ"
+        uses: "actions/setup-java@v4"
         with:
-          name: spigot
-          path: ./spigot*.jar
+          # 配布リストは次の場所から入手できます。
+          # https://github.com/actions/setup-java#supported-distributions
+          distribution: "temurin"
+          # 適切な Java バージョンを使用してビルド アプリケーションを実行する
+          java-version: "21"
+
+      # BuildTools によるビルド スピゴット
+      - name: "B建物の栓"
+        # !! 「最新」を希望のバージョンに変更します。 !!
+        # また、1.17.X より前のバージョンをビルドしようとしている場合は、Java バージョンを変更する必要があります。
+        run: "java -jar BuildTools.jar --rev latest"
       
-      - name: ServerChan
-        uses: yakumioto/serverchan-action@v1
+      # ビルド jar ファイルをアップロードします。
+      - name: "ビルドのアップロード"
+        uses: "actions/upload-artifact@v4"
         with:
-          key: ${{ secrets.SERVERCHANKEY }}
-          text: SpigotBuildAction
-          desp: Latest spigot was just built.
+          name: "Spigot"
+          path: "./spigot*.jar"
+        
+      - name: "現在の日付の取得"
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: "リリースの作成"
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          title: "Nightly Spigot ${{ steps.date.outputs.date }}"
+          automatic_release_tag: "${{ steps.date.outputs.date }}"
+          files: |
+            ./spigot*.jar

@@ -1,0 +1,37 @@
+# 
+# このバージョンの SpigotBuildAction スクリプトは古いです。
+# 「~/.github/workflows/buildspigot-buildtools.yml」の「BuildSpigot with 最新の BuildTools」を使用します。
+# このスクリプトはこれ以上サポートされません。
+# 
+name: BuildSpigot
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # リポジトリから BuildTools を取得する
+      - name: Getting BuildTools
+        uses: actions/checkout@v2
+
+      # BuildTools によるビルド スピゴット
+      - name: Building Spigot
+        # !! 「最新」を希望のバージョンに変更します。 !!
+        run: java -jar BuildTools.jar --rev latest
+      
+      # ビルド jar ファイルをアップロードします。
+      - name: Uploading Build
+        uses: actions/upload-artifact@v2
+        with:
+          name: spigot
+          path: ./spigot*.jar
+      
+      - name: ServerChan
+        uses: yakumioto/serverchan-action@v1
+        with:
+          key: ${{ secrets.SERVERCHANKEY }}
+          text: SpigotBuildAction
+          desp: Latest spigot was just built.
